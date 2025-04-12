@@ -48,7 +48,7 @@ export class EmployeeChatComponent implements OnInit, OnDestroy, AfterViewChecke
     this.subscriptions.push(
       this.chatService.activeHrUsers$.subscribe(users => {
         console.log('Active HR users updated:', users);
-        this.activeHrUsers = users;
+        this.activeHrUsers = users || [];
       })
     );
     

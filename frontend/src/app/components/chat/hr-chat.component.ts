@@ -32,6 +32,9 @@ export class HrChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   // For tracking unread messages
   unreadCounts = new Map<string, number>();
   
+  // Add this property to store all messages
+  private allMessages: ChatMessage[] = [];
+  
   private subscriptions: Subscription[] = [];
   private typingSubject = new Subject<string>();
   
@@ -51,7 +54,7 @@ export class HrChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.subscriptions.push(
       this.chatService.activeEmployeeUsers$.subscribe(users => {
         console.log('Active employee users updated:', users);
-        this.activeEmployeeUsers = users;
+        this.activeEmployeeUsers = users || [];
       })
     );
     
@@ -103,18 +106,23 @@ export class HrChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   // Select a user to chat with
-selectUser(user: ActiveUser): void {
+  selectUser(user: ActiveUser): void {
     this.selectedUser = user;
     this.isSearching = false;
     this.searchTerm = '';
     
-    const pendingMessages = this.messages.filter(
+    // Get any pending messages for this user from our local store
+    const pendingMessages = this.allMessages.filter(
       msg => msg.sender === user.id || msg.recipient === user.id
     );
+    
+    console.log('Pending messages for this user:', pendingMessages);
     
     // Load chat history
     this.chatService.loadChatHistory(user.id).subscribe(
       messages => {
+        console.log('Loaded chat history from server:', messages);
+        
         // Combine history with any pending messages that aren't in the history
         let combinedMessages = [...messages];
         
@@ -125,10 +133,11 @@ selectUser(user: ActiveUser): void {
             m._id === pendingMsg._id || 
             (m.sender === pendingMsg.sender && 
              m.message === pendingMsg.message && 
-             Math.abs(new Date(m.createdAt).getTime() - new Date(pendingMsg.createdAt).getTime()) < 1000)
+             Math.abs(new Date(m.createdAt).getTime() - new Date(pendingMsg.createdAt).getTime()) < 5000)
           );
           
           if (!exists) {
+            console.log('Adding pending message not in history:', pendingMsg);
             combinedMessages.push(pendingMsg);
           }
         });
@@ -140,8 +149,11 @@ selectUser(user: ActiveUser): void {
         
         this.messages = combinedMessages;
         
+        // Reset unread count
+        this.unreadCounts.set(user.id, 0);
+        
         // Mark incoming messages as read
-        if (messages.some(m => m.read === false && m.sender === user.id)) {
+        if (combinedMessages.some(m => m.read === false && m.sender === user.id)) {
           this.chatService.markMessageAsRead(user.id);
         }
         
@@ -191,6 +203,11 @@ selectUser(user: ActiveUser): void {
   private handleNewMessage(message: ChatMessage): void {
     console.log('New message received:', message);
     
+    // Always store the message, regardless of UI state
+    if (!this.allMessages.some(m => m._id === message._id)) {
+      this.allMessages.push(message);
+    }
+    
     // If message is from this user
     if (message.recipient === this.currentUser?._id) {
       // If currently chatting with sender
@@ -227,4 +244,4 @@ selectUser(user: ActiveUser): void {
         this.messageContainer.nativeElement.scrollHeight;
     } catch (err) {}
   }
- }
+}
