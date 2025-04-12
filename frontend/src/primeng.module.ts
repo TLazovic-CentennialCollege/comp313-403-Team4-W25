@@ -13,6 +13,10 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ImageModule } from 'primeng/image';
 import { DropdownModule } from 'primeng/dropdown';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { PanelModule } from 'primeng/panel';
+import { TooltipModule } from 'primeng/tooltip';
 
 @NgModule({
   declarations: [],
@@ -45,6 +49,9 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     ImageModule,
     DropdownModule,
     FloatLabelModule,
+    InputTextareaModule,
+    PanelModule,
+    TooltipModule,
   ],
 
   providers: [MessageService],

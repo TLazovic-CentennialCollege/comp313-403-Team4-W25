@@ -1,0 +1,103 @@
+<!-- Chat toggle button -->
+<div class="chat-toggle" (click)="toggleChat()">
+    <i class="pi pi-comments"></i>
+    <span class="badge" *ngIf="getTotalUnreadCount() > 0">{{getTotalUnreadCount()}}</span>
+  </div>
+  
+  <!-- Chat panel -->
+  <div class="chat-container" [class.visible]="showChatPanel">
+    <div class="chat-header">
+      <span *ngIf="!selectedUser">Employee Messages</span>
+      <span *ngIf="selectedUser">Chat with {{ selectedUser.name }}</span>
+      <div class="chat-actions">
+        <button *ngIf="selectedUser" pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded" 
+                (click)="selectedUser = null"></button>
+        <button pButton icon="pi pi-times" class="p-button-text p-button-rounded" 
+                (click)="showChatPanel = false"></button>
+      </div>
+    </div>
+    
+    <!-- User list view when no chat is selected -->
+    <div *ngIf="!selectedUser" class="user-list-container">
+      <div class="p-panel">
+        <div class="p-panel-header">
+          <h3>Employee Conversations</h3>
+        </div>
+        <div class="p-panel-content">
+          <div *ngIf="activeEmployeeUsers.length === 0" class="empty-state">
+            <i class="pi pi-user-minus"></i>
+            <p>No employees are online at the moment.</p>
+            <p>Check back later for messages.</p>
+          </div>
+          
+          <div *ngFor="let user of activeEmployeeUsers" 
+               class="user-item" 
+               (click)="selectUser(user)">
+            <div class="user-avatar">
+              <i class="pi pi-user"></i>
+            </div>
+            <div class="user-info">
+              <span class="user-name">{{ user.name }}</span>
+              <span class="user-department">{{ user.department }}</span>
+            </div>
+            <div class="user-status">
+              <span class="unread-badge" *ngIf="getUnreadCount(user.id) > 0">
+                {{getUnreadCount(user.id)}}
+              </span>
+              <span class="status-dot online"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Chat view when a user is selected -->
+    <div *ngIf="selectedUser" class="chat-main">
+
+      <!-- Message container -->
+      <div class="message-container" #messageContainer>
+        <div *ngIf="messages.length === 0" class="empty-chat">
+          <i class="pi pi-comments"></i>
+          <p>No messages yet</p>
+          <p>Start a conversation with {{ selectedUser.name }}</p>
+        </div>
+        
+        <div *ngFor="let message of messages" 
+             class="message" 
+             [class.outgoing]="message.sender === currentUser?._id"
+             [class.incoming]="message.sender !== currentUser?._id">
+          <div class="message-content">
+            {{ message.message }}
+            <span class="message-time">
+              {{ message.createdAt | date:'shortTime' }}
+              <i *ngIf="message.sender === currentUser?._id" 
+                 class="pi" 
+                 [ngClass]="{'pi-check': !message.read, 'pi-check-circle': message.read}"></i>
+            </span>
+          </div>
+        </div>
+        
+        <!-- Typing indicator -->
+        <div *ngIf="partnerIsTyping" class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+      
+      <!-- Message input -->
+      <div class="message-input-container">
+        <textarea pInputTextarea 
+                  [(ngModel)]="newMessage" 
+                  (input)="onMessageInput()"
+                  placeholder="Type a message..." 
+                  [rows]="1"
+                  (keydown.enter)="sendMessage(); $event.preventDefault()"></textarea>
+        <button pButton 
+                type="button" 
+                icon="pi pi-send" 
+                [disabled]="!newMessage.trim()" 
+                (click)="sendMessage()"></button>
+      </div>
+    </div>
+  </div>
