@@ -1,100 +1,105 @@
 <!-- Chat toggle button -->
 <div class="chat-toggle" (click)="toggleChat()">
-    <i class="pi pi-comments" [class.has-unread]="activeHrUsers.length > 0"></i>
-    <span class="badge" *ngIf="activeHrUsers.length > 0">{{activeHrUsers.length}}</span>
+  <i class="pi pi-comments"></i>
+  <!-- Only show badge if there are unread messages, not just active HR users -->
+  <span class="badge" *ngIf="unreadMessages > 0">{{unreadMessages}}</span>
+</div>
+
+<!-- Chat panel -->
+<div class="chat-container" [class.visible]="showChatPanel">
+  <div class="chat-header">
+    <span *ngIf="!selectedUser">Chat with HR</span>
+    <span *ngIf="selectedUser">{{ selectedUser.name }} ({{ selectedUser.department }})</span>
+    <div class="chat-actions">
+      <button *ngIf="selectedUser" pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded" 
+              (click)="selectedUser = null"></button>
+      <button pButton icon="pi pi-times" class="p-button-text p-button-rounded" 
+              (click)="showChatPanel = false"></button>
+    </div>
   </div>
   
-  <!-- Chat panel -->
-  <div class="chat-container" [class.visible]="showChatPanel">
-    <div class="chat-header">
-      <span *ngIf="!selectedUser">Chat with HR</span>
-      <span *ngIf="selectedUser">{{ selectedUser.name }} ({{ selectedUser.department }})</span>
-      <div class="chat-actions">
-        <button *ngIf="selectedUser" pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded" 
-                (click)="selectedUser = null"></button>
-        <button pButton icon="pi pi-times" class="p-button-text p-button-rounded" 
-                (click)="showChatPanel = false"></button>
+  <!-- User list view when no chat is selected -->
+  <div *ngIf="!selectedUser" class="user-list-container">
+    <div class="p-panel">
+      <div class="p-panel-header">
+        <h3>Available HR Representatives</h3>
       </div>
-    </div>
-    
-    <!-- User list view when no chat is selected -->
-    <div *ngIf="!selectedUser" class="user-list-container">
-      <div class="p-panel">
-        <div class="p-panel-header">
-          <h3>Available HR Representatives</h3>
-        </div>
-        <div class="p-panel-content">
-          <div *ngIf="activeHrUsers.length === 0" class="empty-state">
-            <i class="pi pi-user-minus"></i>
-            <p>No HR representatives are online at the moment.</p>
-            <p>Please try again later or submit a ticket.</p>
-          </div>
-          
-          <div *ngFor="let user of activeHrUsers" 
-               class="user-item" 
-               (click)="selectUser(user)">
-            <div class="user-avatar">
-              <i class="pi pi-user"></i>
-            </div>
-            <div class="user-info">
-              <span class="user-name">{{ user.name }}</span>
-              <span class="user-department">{{ user.department }}</span>
-            </div>
-            <div class="user-status">
-              <span class="status-dot online"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Chat view when a user is selected -->
-    <div *ngIf="selectedUser" class="chat-main">
-
-      <!-- Message container -->
-      <div class="message-container" #messageContainer>
-        <div *ngIf="messages.length === 0" class="empty-chat">
-          <i class="pi pi-comments"></i>
-          <p>No messages yet</p>
-          <p>Start a conversation with {{ selectedUser.name }}</p>
+      <div class="p-panel-content">
+        <div *ngIf="activeHrUsers.length === 0" class="empty-state">
+          <i class="pi pi-user-minus"></i>
+          <p>No HR representatives are online at the moment.</p>
+          <p>Please try again later or submit a ticket.</p>
         </div>
         
-        <div *ngFor="let message of messages" 
-             class="message" 
-             [class.outgoing]="message.sender === currentUser?._id"
-             [class.incoming]="message.sender !== currentUser?._id">
-          <div class="message-content">
-            {{ message.message }}
-            <span class="message-time">
-              {{ message.createdAt | date:'shortTime' }}
-              <i *ngIf="message.sender === currentUser?._id" 
-                 class="pi" 
-                 [ngClass]="{'pi-check': !message.read, 'pi-check-circle': message.read}"></i>
+        <div *ngFor="let user of activeHrUsers" 
+             class="user-item" 
+             (click)="selectUser(user)">
+          <div class="user-avatar">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ user.name }}</span>
+            <span class="user-department">{{ user.department }}</span>
+          </div>
+          <div class="user-status">
+            <!-- Show unread message indicator if this HR user has sent messages -->
+            <span class="unread-badge" *ngIf="getUnreadCountForUser(user.id) > 0">
+              {{getUnreadCountForUser(user.id)}}
             </span>
+            <span class="status-dot online"></span>
           </div>
         </div>
-        
-        <!-- Typing indicator -->
-        <div *ngIf="partnerIsTyping" class="typing-indicator">
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Chat view when a user is selected -->
+  <div *ngIf="selectedUser" class="chat-main">
+
+    <!-- Message container -->
+    <div class="message-container" #messageContainer>
+      <div *ngIf="messages.length === 0" class="empty-chat">
+        <i class="pi pi-comments"></i>
+        <p>No messages yet</p>
+        <p>Start a conversation with {{ selectedUser.name }}</p>
+      </div>
+      
+      <div *ngFor="let message of messages" 
+           class="message" 
+           [class.outgoing]="message.sender === currentUser?._id"
+           [class.incoming]="message.sender !== currentUser?._id">
+        <div class="message-content">
+          {{ message.message }}
+          <span class="message-time">
+            {{ message.createdAt | date:'shortTime' }}
+            <i *ngIf="message.sender === currentUser?._id" 
+               class="pi" 
+               [ngClass]="{'pi-check': !message.read, 'pi-check-circle': message.read}"></i>
+          </span>
         </div>
       </div>
       
-      <!-- Message input -->
-      <div class="message-input-container">
-        <textarea pInputTextarea 
-                  [(ngModel)]="newMessage" 
-                  (input)="onMessageInput()"
-                  placeholder="Type a message..." 
-                  [rows]="1"
-                  (keydown.enter)="sendMessage(); $event.preventDefault()"></textarea>
-        <button pButton 
-                type="button" 
-                icon="pi pi-send" 
-                [disabled]="!newMessage.trim()" 
-                (click)="sendMessage()"></button>
+      <!-- Typing indicator -->
+      <div *ngIf="partnerIsTyping" class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
       </div>
     </div>
+    
+    <!-- Message input -->
+    <div class="message-input-container">
+      <textarea pInputTextarea 
+                [(ngModel)]="newMessage" 
+                (input)="onMessageInput()"
+                placeholder="Type a message..." 
+                [rows]="1"
+                (keydown.enter)="sendMessage(); $event.preventDefault()"></textarea>
+      <button pButton 
+              type="button" 
+              icon="pi pi-send" 
+              [disabled]="!newMessage.trim()" 
+              (click)="sendMessage()"></button>
+    </div>
   </div>
+</div>
