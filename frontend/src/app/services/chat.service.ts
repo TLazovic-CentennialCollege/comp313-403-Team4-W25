@@ -71,7 +71,18 @@ export class ChatService {
   private initializeSocketConnection(): void {
     if (!this.socket && this.authService.getToken()) {
       console.log('Initializing Socket.IO connection');
-      this.socket = io(environment.apiUrl.replace('/api', ''), {
+      
+      let socketUrl;
+      if (environment.production) {
+        const origin = window.location.origin;
+        socketUrl = origin;
+      } else {
+        socketUrl = environment.apiUrl.replace('/api', '');
+      }
+      
+      console.log('Connecting to Socket.IO server at:', socketUrl);
+      
+      this.socket = io(socketUrl, {
         auth: {
           token: this.authService.getToken()
         }
