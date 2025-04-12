@@ -12,7 +12,7 @@ import { environment } from "../../environments/environment";
 	providedIn: "root",
 })
 export class ApiService {
-	private apiUrl = environment.apiUrl || "http://localhost:3000/api";
+	private apiUrl = environment.apiUrl || "/api";
 
 	constructor(private http: HttpClient) {}
 

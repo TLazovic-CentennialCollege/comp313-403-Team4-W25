@@ -6,8 +6,10 @@
 	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "node server.js",
-		"dev": "nodemon server.js"
+		"dev": "nodemon server.js",
+		"build:frontend": "cd ../frontend && npm install && npm run build",
+		"copy:frontend": "powershell -Command \"Remove-Item -Recurse -Force ./public; Copy-Item -Recurse -Force ../frontend/dist/hopper/* ./public/\"",
+		"start": "npm run build:frontend && npm run copy:frontend && node server.js"
 	},
 	"keywords": [],
 	"author": "",

@@ -13,6 +13,15 @@ import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import User from "./models/User.js";
 import ChatMessage from './models/ChatMessage.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve frontend static files
+const frontendPath = path.join(__dirname, 'public');
+
 
 // Load environment variables
 config();
@@ -21,10 +30,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 
+app.use(express.static(frontendPath));
+
 // Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:4200",
+    origin: true,
     credentials: true
   }
 });
@@ -32,7 +43,7 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:4200",
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -225,6 +236,21 @@ app.get("/", (req, res) => {
   logger.info("Base route accessed");
   res.send("HR Ticketing System API is running");
 });
+
+
+
+
+app.get('*', (req, res, next) => {
+  // If the request is for a file, skip
+  if (req.path.includes('.') || req.path.startsWith('/api/')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
